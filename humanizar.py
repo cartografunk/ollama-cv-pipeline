@@ -27,6 +27,7 @@ Uso:
 """
 
 import argparse
+import difflib
 import logging
 import re
 import sys
@@ -219,7 +220,10 @@ def dividir_etiqueta(para, estilos_etiqueta: set = frozenset()) -> tuple[list, l
 def aplicar_texto(para, runs_cuerpo: list, nuevo: str, color_resaltado) -> None:
     """Escribe `nuevo` en el primer run del cuerpo (conserva su formato) y
     vacía el resto. Los runs de la etiqueta no se tocan.
-    color_resaltado: un WD_COLOR_INDEX para marcar el cambio, o None."""
+    color_resaltado: un WD_COLOR_INDEX para marcar el cambio, o None.
+    Resalta el párrafo COMPLETO — usado solo con --resaltado-linea-completa;
+    por default se usa aplicar_texto_diff, que resalta nada más lo que
+    cambió."""
     if runs_cuerpo:
         runs_cuerpo[0].text = nuevo
         for r in runs_cuerpo[1:]:
@@ -230,6 +234,82 @@ def aplicar_texto(para, runs_cuerpo: list, nuevo: str, color_resaltado) -> None:
         objetivo = para.runs[0]
     if color_resaltado is not None:
         objetivo.font.highlight_color = color_resaltado
+
+
+# --------------------------------------------------------------------------
+# Diff a nivel de palabra: resaltar solo lo que cambió, no la línea entera
+# --------------------------------------------------------------------------
+def _tokenizar(s: str) -> list[str]:
+    """Separa en palabras y espacios, cada uno como su propio token, para
+    poder reconstruir el texto exacto y comparar palabra por palabra (no
+    carácter por carácter, que sería demasiado ruidoso: cambiar "reduje" por
+    "reducí" no debe marcar la palabra completa desde la primera letra)."""
+    return re.findall(r"\S+|\s+", s)
+
+
+def _segmentos_diff(original: str, nuevo: str) -> list[tuple[str, bool]]:
+    """Compara `original` contra `nuevo` palabra por palabra y devuelve el
+    texto de `nuevo` partido en [(texto, cambio), ...], donde cambio=True
+    marca los tramos que NO estaban así en el original (para resaltar solo
+    esos). Los tramos iguales (nombres de empresa, herramientas, cifras que
+    sobrevivieron intactas) salen con cambio=False."""
+    tok_orig = _tokenizar(original)
+    tok_nuevo = _tokenizar(nuevo)
+    sm = difflib.SequenceMatcher(None, tok_orig, tok_nuevo, autojunk=False)
+    segmentos = []
+    for tag, _i1, _i2, j1, j2 in sm.get_opcodes():
+        if j1 == j2:
+            continue  # tramo que solo borra texto del original: nada que escribir
+        segmentos.append(("".join(tok_nuevo[j1:j2]), tag != "equal"))
+    return segmentos
+
+
+def _clonar_formato(run_base, run_nuevo) -> None:
+    """Copia el formato de caracter relevante de run_base a run_nuevo, para
+    que los runs nuevos (creados por el diff) se vean igual que el resto
+    del párrafo."""
+    run_nuevo.bold = run_base.bold
+    run_nuevo.italic = run_base.italic
+    run_nuevo.underline = run_base.underline
+    if run_base.font.size is not None:
+        run_nuevo.font.size = run_base.font.size
+    if run_base.font.name is not None:
+        run_nuevo.font.name = run_base.font.name
+    try:
+        if run_base.font.color and run_base.font.color.rgb is not None:
+            run_nuevo.font.color.rgb = run_base.font.color.rgb
+    except AttributeError:
+        pass  # color heredado del tema, sin rgb explícito: no hay nada que copiar
+
+
+def aplicar_texto_diff(para, runs_cuerpo: list, original: str, nuevo: str,
+                        color_resaltado) -> None:
+    """Como aplicar_texto, pero en vez de resaltar el párrafo completo,
+    parte el nuevo texto en varios runs y resalta SOLO los tramos que
+    cambiaron respecto a `original` (diff palabra por palabra). Los runs
+    de la etiqueta no se tocan."""
+    run_base = runs_cuerpo[0] if runs_cuerpo else (para.runs[0] if para.runs else None)
+    segmentos = _segmentos_diff(original, nuevo)
+
+    for r in runs_cuerpo:
+        r.text = ""
+
+    if not segmentos:
+        return
+
+    primero = True
+    for texto, cambio in segmentos:
+        if not texto:
+            continue
+        if primero and runs_cuerpo:
+            run = runs_cuerpo[0]
+            run.text = texto
+            primero = False
+        else:
+            run = para.add_run(texto)
+            if run_base is not None:
+                _clonar_formato(run_base, run)
+        run.font.highlight_color = color_resaltado if (cambio and color_resaltado is not None) else None
 
 
 def _estilo(para) -> str:
@@ -274,7 +354,8 @@ def listar_estilos(entrada: Path) -> None:
 def procesar_docx(entrada: Path, salida: Path, model: str, min_chars: int,
                   dry_run: bool, color_resaltado, proteger_etiqueta: bool,
                   solo_estilos: set = frozenset(), omitir_estilos: set = frozenset(),
-                  estilos_etiqueta: set = frozenset()) -> None:
+                  estilos_etiqueta: set = frozenset(),
+                  resaltado_linea_completa: bool = False) -> None:
     doc = Document(str(entrada))
     parrafos = list(iter_paragraphs_incl_tables(doc))
     total = len(parrafos)
@@ -323,7 +404,10 @@ def procesar_docx(entrada: Path, salida: Path, model: str, min_chars: int,
         if nuevo_texto == texto:
             continue
 
-        aplicar_texto(para, runs_cuerpo, sep + nuevo_texto, color_resaltado)
+        if resaltado_linea_completa:
+            aplicar_texto(para, runs_cuerpo, sep + nuevo_texto, color_resaltado)
+        else:
+            aplicar_texto_diff(para, runs_cuerpo, cuerpo, sep + nuevo_texto, color_resaltado)
         cambiados += 1
 
         if i % 5 == 0:
@@ -354,6 +438,10 @@ def main():
                         help="Solo muestra qué párrafos se procesarían, sin llamar al modelo")
     parser.add_argument("--sin-resaltado", action="store_true",
                         help="No resaltar los párrafos reescritos")
+    parser.add_argument("--resaltado-linea-completa", action="store_true",
+                        help="Resaltar el párrafo reescrito COMPLETO en vez de "
+                             "solo las palabras/frases que cambiaron (default: "
+                             "resalta solo lo que cambió)")
     parser.add_argument("--color-resaltado", default="amarillo",
                         choices=sorted(COLORES_RESALTADO),
                         help="Color de resaltado para revisar cambios "
@@ -396,7 +484,8 @@ def main():
                   proteger_etiqueta=not args.sin_proteger_etiqueta,
                   solo_estilos=_lista(args.solo_estilos),
                   omitir_estilos=_lista(args.omitir_estilos),
-                  estilos_etiqueta=_lista(args.estilos_etiqueta))
+                  estilos_etiqueta=_lista(args.estilos_etiqueta),
+                  resaltado_linea_completa=args.resaltado_linea_completa)
 
     # Copiar automáticamente a Google Drive
     if not args.dry_run:
