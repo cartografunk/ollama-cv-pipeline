@@ -1,0 +1,73 @@
+EQS Data and AI Analyst
+Sobre el papel
+ID de puesto 
+295397
+Ubicación
+México
+ 
+Querétaro
+MéxicoMexico CityMexico City
+Remoto u Oficina 
+Híbrido (Remoto/ Oficina)
+Empresa 
+Siemens Energy, S. de R.L. de C.V.
+Organización 
+EVP Global Functions
+Unidad empresarial 
+EHS, Quality Governance & Security
+Tiempo completo/parcial 
+Jornada completa
+Nivel de experiencia 
+Profesional / Experto
+
+A Snapshot of Your Day
+
+Your day starts by reviewing global EQS data flows and signals—not just to report what happened, but to understand what might happen next. You begin by validating automated data pipelines and Power BI semantic models, ensuring data accuracy across Safety, Environmental, and Sustainability domains. From there, you shift into AI‑driven analytics, refining predictive models, experimenting with new features, and validating outputs against real-world EQS scenarios.
+
+Midday, you collaborate with stakeholders across Business Areas and IT to translate evolving EQS needs into scalable solutions. This could include designing a RAG‑enabled assistant to support reporting queries, enhancing anomaly detection models, or automating manual reporting processes using AI and advanced analytics. You continuously evaluate where AI can reduce effort, increase insight quality, and strengthen risk visibility. Throughout the day, you balance hands‑on development with strategic thinking—ensuring that everything you build is reusable, governed, and aligned to enterprise standards.
+
+You close your day by sharing knowledge—whether refining documentation, enabling colleagues through training, or shaping the next generation of EQS analytics capabilities.
+
+How You’ll Make an Impact
+
+You will play a key role in transforming EQS reporting from descriptive to predictive and intelligence‑driven. By embedding AI into our analytics ecosystem, you will help the organization move beyond historical reporting toward forward‑looking insights that support proactive risk management and decision‑making.
+Your work will improve the speed, quality, and scalability of EQS reporting—reducing manual effort, strengthening audit readiness, and enabling consistent global insights. You will also act as a technical reference point, elevating the capability of the entire team by introducing modern analytics approaches, reusable standards, and AI‑enabled solutions.
+What You Bring 
+
+Bachelor’s degree in data Analytics, Information Systems, Engineering, Computer Science, Environmental Sciences, or a related field.
+Strong experience in data analytics, reporting, digital transformation, or business intelligence roles.
+Experience working with analytics and visualization tools (e.g., Power BI) and large, structured datasets.
+Strong analytical thinking with the ability to translate complex data into clear, actionable insights.
+Effective communication skills to collaborate with technical and non-technical stakeholders across global teams.
+Experience in EHS, Quality, Security, sustainability, or non-financial reporting environments is an advantage.
+Note: You bring deep expertise at the intersection of Power BI, AI, and data engineering, with the ability to design and deliver enterprise‑grade analytics solutions. You are comfortable working across the full data lifecycle—from pipeline design and semantic modeling to advanced AI applications such as machine learning models, LLMs, RAG architectures, and prompt engineering. Beyond technical capability, you bring strong judgment. You understand when AI adds value—and when it doesn’t. You can translate complex EQS and business needs into meaningful analytics, challenge assumptions constructively, and design solutions that are both scalable and practical. You communicate confidently, think critically, and naturally enable others by sharing knowledge, defining standards, and building reusable assets.
+
+About the Team
+
+You will join a global EQS Reporting team operating at the intersection of Environment, Health, Safety, Quality, and Security. The team is highly collaborative and works closely with Business Areas, IT, and Corporate Functions to deliver reliable, compliant, and forward‑looking reporting. As the function continues to evolve, the team is increasingly focused on digitalization and AI‑enabled reporting, with initiatives such as analytics automation, data product development, and AI‑powered insights shaping the roadmap. You will play a key role in this transformation—helping to define how EQS data is leveraged at scale and how advanced analytics becomes a core capability across the organization.
+
+Who is Siemens Energy?
+
+
+At Siemens Energy, we are more than just an energy technology company. We meet the growing energy demand across 90+ countries while ensuring our climate is protected. With ~100,000 dedicated employees, we not only generate electricity for over 16% of the global community, but we’re also using our technology to help protect people and the environment.
+
+Our global team is committed to making sustainable, reliable, and affordable energy a reality by pushing the boundaries of what is possible. We uphold a 150-year legacy of innovation that encourages our search for people who will support our focus on decarbonization, new technologies, and energy transformation.
+
+
+Find out how you can make a difference at Siemens Energy: https://www.siemens-energy.com/employeevideo
+
+
+Our Commitment to Diversity
+
+Lucky for us, we are not all the same. Through diversity we generate power. We run on inclusion and our combined creative energy is fueled by over 130 nationalities. Siemens Energy celebrates character – no matter what ethnic background, gender, age, religion, gender identity, sexual orientation or disability. We energize society, all of society, and we do not discriminate based on our differences.
+
+
+Rewards/Benefits
+
+
+Career growth and development opportunities
+Supportive work culture
+Company paid Health and wellness benefits
+Paid Time Off and paid holidays
+Savings Fund
+Parental leave and family building benefits
