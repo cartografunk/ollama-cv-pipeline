@@ -31,6 +31,21 @@ _TRIVIAL_RE = re.compile(
     r"^[\s\-–—·|•.,:;()]*$|^https?://|^[\w.\-]+@[\w.\-]+\.\w+$"
 )
 MIN_CHARS = 12
+MAX_PALABRAS_ETIQUETA = 4
+_CIERRE_ORACION = (".", ":", ";", ")")
+
+
+def _es_etiqueta_de_tabla(texto: str) -> bool:
+    """Detecta encabezados de columna/categoría de tablas de skills
+    ("Category", "Tools / Technologies", "GIS / Geospatial") que python-docx
+    no reporta como negrita/heading porque el bold viene del estilo de la
+    tabla, no del run ni del estilo de párrafo. Heurística: frase corta
+    (<=4 palabras) que no cierra como oración/cláusula. Un chunk como
+    "Microsoft Office Specialist (2013)" NO cae aquí porque cierra con ")".
+    Es una heurística, no perfecta: si notas evidencia real que se está
+    filtrando, avísame para afinarla."""
+    palabras = texto.split()
+    return len(palabras) <= MAX_PALABRAS_ETIQUETA and not texto.rstrip().endswith(_CIERRE_ORACION)
 
 _HEADING_STYLES = {"heading 1", "heading 2", "heading 3", "title", "subtitle"}
 
@@ -60,6 +75,8 @@ def extraer_chunks(path_docx: str) -> list:
             seccion_actual = texto
             continue
         if len(texto) < MIN_CHARS or _TRIVIAL_RE.match(texto):
+            continue
+        if _es_etiqueta_de_tabla(texto):
             continue
 
         contador += 1

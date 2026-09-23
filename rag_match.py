@@ -80,6 +80,13 @@ suficiente.
 REGLAS ESTRICTAS:
 - Nunca clasifiques como VERIFIED solo por similitud temática superficial.
 - Nunca inventes evidencia que no esté en el texto de arriba.
+- Cuidado con siglas/palabras que suenan parecido pero significan otra \
+cosa: "RAG" en la vacante puede referirse a Retrieval-Augmented \
+Generation, no a "riesgo" ni a ningún otro uso de esas letras. Si la \
+evidencia no habla LITERALMENTE del concepto del requisito, no es \
+VERIFIED aunque el tema general se parezca.
+- Antes de clasificar, identifica en tu cabeza qué fragmento(s) concreto(s) \
+respaldan el requisito; si no puedes señalar ninguno con precisión, es GAP.
 - Cita los ids de los fragmentos que usaste en "evidence_ids" (lista vacía \
 si es GAP).
 
@@ -97,14 +104,15 @@ def cargar_kb(path: str) -> dict:
         return json.load(f)
 
 
-def clasificar_con_evidencia(requisito: str, evidencia: list, intentos: int = 2) -> dict:
+def clasificar_con_evidencia(requisito: str, evidencia: list, model: str = MODEL,
+                              intentos: int = 2) -> dict:
     texto_evidencia = "\n".join(f"- [{c['id']}] {c['text']}" for c in evidencia)
     prompt = PROMPT_CLASIFICACION.format(requisito=requisito, evidencia=texto_evidencia)
 
     for intento in range(1, intentos + 1):
         try:
             resp = requests.post(OLLAMA_URL, json={
-                "model": MODEL, "prompt": prompt, "stream": False,
+                "model": model, "prompt": prompt, "stream": False,
                 "options": {"temperature": 0.0, "num_ctx": 4096},
             }, timeout=TIMEOUT)
             resp.raise_for_status()
@@ -141,7 +149,8 @@ def clasificar_con_evidencia(requisito: str, evidencia: list, intentos: int = 2)
             "rationale": "clasificador no disponible tras varios intentos, se marcó GAP por seguridad"}
 
 
-def evaluar_requisito(item: str, texto_cv: str, kb: dict, top_k: int, sim_floor: float) -> dict:
+def evaluar_requisito(item: str, texto_cv: str, kb: dict, top_k: int, sim_floor: float,
+                       classify_model: str = MODEL) -> dict:
     # 1) Match literal, igual que match.py: barato, determinista, 100%
     #    trazable a texto exacto del CV.
     if any(_contiene_termino(texto_cv, v) for v in _variantes(item)):
@@ -168,7 +177,7 @@ def evaluar_requisito(item: str, texto_cv: str, kb: dict, top_k: int, sim_floor:
 
     # 3) Clasificación grounded: el LLM solo ve el requisito + esta evidencia.
     evidencia = [c for _, c in candidatos]
-    resultado = clasificar_con_evidencia(item, evidencia)
+    resultado = clasificar_con_evidencia(item, evidencia, model=classify_model)
     resultado["item"] = item
     resultado["via"] = "rag"
     resultado["top_similarity"] = round(candidatos[0][0], 3)
@@ -183,6 +192,10 @@ def main():
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--sim-floor", type=float, default=0.15,
                          help="Similitud mínima para molestar al LLM (default: 0.15)")
+    parser.add_argument("--classify-model", default=MODEL,
+                         help=f"Modelo Ollama para la clasificación VERIFIED/PARTIAL/GAP "
+                              f"(default: {MODEL}, igual que match.py). Prueba algo más "
+                              f"grande si ves clasificaciones dudosas, ej. llama3.1:8b")
     args = parser.parse_args()
 
     # leer_jd_y_empresa() lee sys.argv[1] directamente (viene de match.py),
@@ -215,7 +228,8 @@ def main():
         for item in items:
             procesados += 1
             print(f"   [{procesados}/{total_items}] {item}...")
-            r = evaluar_requisito(item, texto_cv, kb, args.top_k, args.sim_floor)
+            r = evaluar_requisito(item, texto_cv, kb, args.top_k, args.sim_floor,
+                                   classify_model=args.classify_model)
             r["categoria"] = categoria
             r["peso"] = peso
             resultados.append(r)
