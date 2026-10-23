@@ -1,0 +1,75 @@
+{
+  "machine learning": {
+    "alias_requisito": ["ml", "machine learning models", "aprendizaje automatico"],
+    "requiere_alguno": ["scikit-learn", "sci-kit", "pytorch", "tensorflow", "keras", "semantic segmentation"],
+    "frase": "Machine learning and deep learning for classification and semantic segmentation using PyTorch, TensorFlow/Keras and Scikit-Learn"
+  },
+  "deep learning": {
+    "alias_requisito": ["redes neuronales", "neural networks"],
+    "requiere_alguno": ["pytorch", "tensorflow", "keras", "semantic segmentation"],
+    "frase": "Deep learning applied to semantic segmentation using PyTorch and TensorFlow/Keras"
+  },
+  "computer vision": {
+    "alias_requisito": ["vision por computadora", "vision artificial", "image analysis"],
+    "requiere_alguno": ["opencv", "semantic segmentation", "artificial vision", "computer vision"],
+    "frase": "Computer vision with PyTorch-based semantic segmentation and OpenCV"
+  },
+  "power bi": {
+    "alias_requisito": ["powerbi", "microsoft power bi", "power bi desktop"],
+    "requiere_alguno": ["power bi"],
+    "relacionado": ["excel", "power query", "plotly", "matplotlib", "arcgis dashboards"],
+    "frase": "Data visualization and reporting with Power BI and Excel/Power Query",
+    "si_falta": "Agrega a tu CV un bullet real donde uses Power BI."
+  },
+  "power bi mapas": {
+    "alias_requisito": ["power bi maps", "mapas en power bi", "geospatial visualization in power bi", "power bi geospatial"],
+    "requiere_juntos": [
+      ["power bi"],
+      ["map", "maps", "mapping", "mapas", "spatial", "geospatial", "gis"]
+    ],
+    "relacionado": ["arcgis dashboards", "arcgis web maps", "maplibre gl js"],
+    "frase": "Geospatial visualization and map-based reporting in Power BI",
+    "si_falta": "Ningún chunk del CV junta Power BI con mapas/datos espaciales. Si ya lo hiciste, agrega un bullet real (proyecto, datos mapeados, tipo de mapa) y vuelve a correr build_afinidad.py."
+  },
+  "excel": {
+    "alias_requisito": ["microsoft excel", "ms excel", "spreadsheets", "hojas de calculo"],
+    "requiere_alguno": ["excel"],
+    "relacionado": ["power query"],
+    "frase": "Excel and Power Query for analysis and reporting"
+  },
+  "dashboards": {
+    "alias_requisito": ["dashboard", "dashboarding", "tableros"],
+    "requiere_alguno": ["arcgis dashboards", "dashboard", "dashboards"],
+    "relacionado": ["power bi", "plotly"],
+    "frase": "Interactive dashboards and web maps with ArcGIS Dashboards",
+    "si_falta": "Si tienes dashboards hechos en Power BI, agrega un bullet que lo diga con esas palabras."
+  },
+  "data visualization": {
+    "alias_requisito": ["data visualisation", "visualizacion de datos", "visualization", "data viz"],
+    "requiere_alguno": ["power bi", "plotly", "matplotlib", "arcgis dashboards"],
+    "frase": "Data visualization with Power BI, Plotly, Matplotlib and ArcGIS Dashboards"
+  },
+  "geospatial database": {
+    "alias_requisito": ["spatial database", "spatial databases", "geospatial databases", "geodatabase", "bases de datos espaciales", "geospatial database management", "spatial database management"],
+    "requiere_alguno": ["postgis"],
+    "relacionado": ["geodatabase", "postgresql"],
+    "frase": "Spatial databases and spatial reports with PostgreSQL/PostGIS and QGIS"
+  },
+  "sql": {
+    "alias_requisito": ["sql databases", "relational databases", "bases de datos relacionales"],
+    "requiere_alguno": ["sql", "postgresql"],
+    "frase": "SQL and PostgreSQL for data validation and ETL pipelines"
+  },
+  "etl": {
+    "alias_requisito": ["etl pipelines", "data pipelines", "pipelines de datos"],
+    "requiere_alguno": ["etl"],
+    "relacionado": ["airflow", "data ingestion"],
+    "frase": "ETL pipelines in Python and PostgreSQL/PostGIS"
+  },
+  "web mapping": {
+    "alias_requisito": ["web gis", "web maps", "web mapping applications", "mapas web"],
+    "requiere_alguno": ["maplibre gl js", "arcgis web maps"],
+    "relacionado": ["arcgis rest api", "geoserver"],
+    "frase": "Web mapping with MapLibre GL JS and ArcGIS Web Maps"
+  }
+}

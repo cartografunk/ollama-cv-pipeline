@@ -38,6 +38,7 @@ import sys
 
 import requests
 
+from afinidad import buscar_afinidad, cargar_afinidad
 from embeddings import cosine_similarity, embed_text
 from match import (
     CARPETA_MATCHES,
@@ -150,12 +151,20 @@ def clasificar_con_evidencia(requisito: str, evidencia: list, model: str = MODEL
 
 
 def evaluar_requisito(item: str, texto_cv: str, kb: dict, top_k: int, sim_floor: float,
-                       classify_model: str = MODEL) -> dict:
+                       classify_model: str = MODEL, afinidad: dict = None) -> dict:
     # 1) Match literal, igual que match.py: barato, determinista, 100%
     #    trazable a texto exacto del CV.
     if any(_contiene_termino(texto_cv, v) for v in _variantes(item)):
         return {"item": item, "classification": "VERIFIED", "evidence_ids": [],
                 "rationale": "match literal en el CV", "via": "literal"}
+
+    # 1b) Lista de afinidad (afinidad.json, generada con build_afinidad.py):
+    #     el requisito coincide con un concepto cuyos términos SÍ aparecen en
+    #     chunks reales del CV. Sin LLM y con evidence_ids citables.
+    if afinidad:
+        hit = buscar_afinidad(item, afinidad)
+        if hit:
+            return {"item": item, **hit, "via": "afinidad"}
 
     # 2) Retrieval semántico contra la knowledge base.
     try:
@@ -189,6 +198,9 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("jd", nargs="?", help="Ruta a la JD (.txt)")
     parser.add_argument("--kb", default="kb_index.json")
+    parser.add_argument("--afinidad", default="afinidad.json",
+                         help="Lista de afinidad generada por build_afinidad.py "
+                              "(default: afinidad.json; si no existe, se ignora)")
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--sim-floor", type=float, default=0.15,
                          help="Similitud mínima para molestar al LLM (default: 0.15)")
@@ -211,6 +223,10 @@ def main():
 
     kb = cargar_kb(args.kb)
 
+    afinidad = cargar_afinidad(args.afinidad)
+    if afinidad is None:
+        print(f"ℹ️  Sin {args.afinidad}: corre build_afinidad.py para activar la lista de afinidad.")
+
     jd_text, empresa = leer_jd_y_empresa()
     if not jd_text.strip():
         print("❌ No pegaste ninguna JD.")
@@ -229,7 +245,8 @@ def main():
             procesados += 1
             print(f"   [{procesados}/{total_items}] {item}...")
             r = evaluar_requisito(item, texto_cv, kb, args.top_k, args.sim_floor,
-                                   classify_model=args.classify_model)
+                                   classify_model=args.classify_model,
+                                   afinidad=afinidad)
             r["categoria"] = categoria
             r["peso"] = peso
             resultados.append(r)
