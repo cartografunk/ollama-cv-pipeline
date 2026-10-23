@@ -4,3 +4,11 @@ __pycache__/
 miniforge3/
 venv/
 *.log
+.env
+
+# Datos personales: NUNCA al repo (CVs, perfil extraído, KB con el CV verbatim)
+*.docx
+cv_perfil.json
+kb_index.json
+matches/
+*.cambios.json

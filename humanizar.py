@@ -49,7 +49,7 @@ COLORES_RESALTADO = {
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_TAGS_URL = "http://localhost:11434/api/tags"
 DEFAULT_MODEL = "mistral:7b"
-DEFAULT_TIMEOUT = 1800
+DEFAULT_TIMEOUT = 180
 
 logging.basicConfig(
     level=logging.INFO,
@@ -247,20 +247,42 @@ def _tokenizar(s: str) -> list[str]:
     return re.findall(r"\S+|\s+", s)
 
 
-def _segmentos_diff(original: str, nuevo: str) -> list[tuple[str, bool]]:
+def _segmentos_diff(original: str, nuevo: str, mapa_resaltado=None) -> list[tuple]:
     """Compara `original` contra `nuevo` palabra por palabra y devuelve el
-    texto de `nuevo` partido en [(texto, cambio), ...], donde cambio=True
-    marca los tramos que NO estaban así en el original (para resaltar solo
-    esos). Los tramos iguales (nombres de empresa, herramientas, cifras que
-    sobrevivieron intactas) salen con cambio=False."""
+    texto de `nuevo` partido en [(texto, cambio, resaltado_origen), ...].
+
+    cambio=True marca los tramos que NO estaban así en el original (para
+    resaltarlos con el color de esta pasada). En los tramos iguales,
+    resaltado_origen es el resaltado que esas mismas palabras ya tenían en el
+    original (mapa_resaltado[i] = resaltado del carácter i de `original`), de
+    modo que no se pierde, por ejemplo, el verde que dejó cv_rewriter.py.
+    Un tramo igual se parte donde cambia el resaltado de origen."""
     tok_orig = _tokenizar(original)
     tok_nuevo = _tokenizar(nuevo)
+    offs, pos = [], 0
+    for t in tok_orig:
+        offs.append(pos)
+        pos += len(t)
+
     sm = difflib.SequenceMatcher(None, tok_orig, tok_nuevo, autojunk=False)
     segmentos = []
-    for tag, _i1, _i2, j1, j2 in sm.get_opcodes():
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
         if j1 == j2:
             continue  # tramo que solo borra texto del original: nada que escribir
-        segmentos.append(("".join(tok_nuevo[j1:j2]), tag != "equal"))
+        if tag == "equal":
+            buf, h_act = "", None
+            for k in range(i1, i2):
+                h = (mapa_resaltado[offs[k]]
+                     if mapa_resaltado and offs[k] < len(mapa_resaltado) else None)
+                if buf and h != h_act:
+                    segmentos.append((buf, False, h_act))
+                    buf = ""
+                buf += tok_orig[k]
+                h_act = h
+            if buf:
+                segmentos.append((buf, False, h_act))
+        else:
+            segmentos.append(("".join(tok_nuevo[j1:j2]), True, None))
     return segmentos
 
 
@@ -289,7 +311,13 @@ def aplicar_texto_diff(para, runs_cuerpo: list, original: str, nuevo: str,
     cambiaron respecto a `original` (diff palabra por palabra). Los runs
     de la etiqueta no se tocan."""
     run_base = runs_cuerpo[0] if runs_cuerpo else (para.runs[0] if para.runs else None)
-    segmentos = _segmentos_diff(original, nuevo)
+
+    # Resaltado original carácter por carácter (antes de vaciar los runs).
+    mapa_resaltado = []
+    for r in runs_cuerpo:
+        mapa_resaltado.extend([r.font.highlight_color] * len(r.text))
+
+    segmentos = _segmentos_diff(original, nuevo, mapa_resaltado)
 
     for r in runs_cuerpo:
         r.text = ""
@@ -298,7 +326,7 @@ def aplicar_texto_diff(para, runs_cuerpo: list, original: str, nuevo: str,
         return
 
     primero = True
-    for texto, cambio in segmentos:
+    for texto, cambio, h_origen in segmentos:
         if not texto:
             continue
         if primero and runs_cuerpo:
@@ -309,7 +337,11 @@ def aplicar_texto_diff(para, runs_cuerpo: list, original: str, nuevo: str,
             run = para.add_run(texto)
             if run_base is not None:
                 _clonar_formato(run_base, run)
-        run.font.highlight_color = color_resaltado if (cambio and color_resaltado is not None) else None
+        if cambio and color_resaltado is not None:
+            run.font.highlight_color = color_resaltado
+        else:
+            # Tramo sin cambio: conserva el resaltado que ya tenía (no lo borres).
+            run.font.highlight_color = h_origen
 
 
 def _estilo(para) -> str:
