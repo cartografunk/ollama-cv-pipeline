@@ -23,6 +23,7 @@ import sys
 import requests
 
 from embeddings import cosine_similarity, embed_text
+from afinidad import cargar_afinidad
 from match import MODEL, OLLAMA_URL, TIMEOUT, _extraer_json
 from rag_match import cargar_kb
 
@@ -31,10 +32,10 @@ PESO_CIERRE = {
     "rewritable": 0.9,
     "stretch": 0.6,
     "template_fill": 0.8,
-    "not_rewritable": 0.0,
+    "not_rewritable": 0.5,
 }
 
-PROMPT_GAP_CLOSURE = """Eres un asesor de carrera experto que debe asegurar la contratación del candidato. Analizas un gap \
+PROMPT_GAP_CLOSURE = """Eres un asesor de carrera experto. Analizas un gap \
 entre un requisito de vacante y la evidencia real del CV del candidato.
 
 REQUISITO DE LA VACANTE:
@@ -72,6 +73,8 @@ Clasifica el gap en UNA de estas cuatro categorías:
    contenedores en ningún lado.
 
 REGLAS ESTRICTAS:
+- NUNCA inventes tecnologías, métricas, años ni resultados.
+- NUNCA afirmes experiencia que no esté en la evidencia de arriba.
 - Cita los ids de los chunks usados en "evidence_ids" (lista vacía si es \
   not_rewritable o template_fill sin evidencia).
 - Si es rewritable o stretch, propón UN bullet (máximo 30 palabras) en el \
@@ -102,9 +105,7 @@ def cargar_rag_match(path: str) -> dict:
 
 
 def recuperar_evidencia(item: str, kb: dict, top_k: int, sim_floor: float = 0.05) -> list:
-    """Recupera top-k chunks relevantes para el requisito. Usa un sim_floor
-    muy bajo porque aquí SÍ queremos ver evidencia relacionada aunque no sea
-    perfecta — el clasificador decide después si es suficiente."""
+    """Recupera top-k chunks relevantes para el requisito."""
     try:
         q_vec = embed_text(item, model=kb["model"])
     except RuntimeError as e:
@@ -179,9 +180,26 @@ def clasificar_gap(requisito: str, categoria: str, evidencia: list,
     }
 
 
+def cierre_por_afinidad(r: dict, afinidad: dict, kb: dict):
+    """Requisito que rag_match dio por VERIFIED vía afinidad.json."""
+    entrada = (afinidad or {}).get(r.get("concepto") or "")
+    if not entrada or not entrada.get("soportado") or not entrada.get("frase"):
+        return None
+    secciones = {c["id"]: c["section"] for c in kb["chunks"]}
+    ids = list(r.get("evidence_ids") or [])
+    ids.sort(key=lambda i: secciones.get(i) == "General")
+    return {
+        "clasificacion_cierre": "rewritable",
+        "evidence_ids": ids[:3],
+        "bullet_propuesto": entrada["frase"],
+        "por_que": (f"Afinidad '{r['concepto']}': tu CV lo respalda con otras palabras; "
+                    f"se agrega el término de la vacante donde ya hay evidencia."),
+        "riesgo_entrevista": "bajo",
+        "que_estudiar": None,
+    }
+
+
 def calcular_techo_honesto(requisitos: list, score_actual: float) -> float:
-    """Calcula el score máximo alcanzable si se cierran todos los gaps
-    cerrables honestamente. Los VERIFIED ya están en score_actual."""
     peso_total = sum(r["peso"] for r in requisitos)
     if peso_total == 0:
         return score_actual
@@ -192,7 +210,6 @@ def calcular_techo_honesto(requisitos: list, score_actual: float) -> float:
             cierre = r.get("clasificacion_cierre", "not_rewritable")
             peso_ganable += r["peso"] * PESO_CIERRE.get(cierre, 0.0)
         elif r["classification"] == "PARTIAL":
-            # PARTIAL ya contribuye 0.5 al score. Cerrarlo suma 0.5 más.
             cierre = r.get("clasificacion_cierre", "not_rewritable")
             peso_ganable += r["peso"] * 0.5 * PESO_CIERRE.get(cierre, 0.0)
 
@@ -206,6 +223,8 @@ def main():
                          help="Output de rag_match.py (matches/Empresa_rag_match.json)")
     parser.add_argument("--kb", default="kb_index.json")
     parser.add_argument("--top-k", type=int, default=5)
+    parser.add_argument("--afinidad", default="afinidad.json",
+                         help="Lista generada por build_afinidad.py (si no existe, se ignora)")
     parser.add_argument("--incluir-partials", action="store_true",
                          help="También procesar PARTIALs, no solo GAPs")
     args = parser.parse_args()
@@ -219,15 +238,25 @@ def main():
     if args.incluir_partials:
         objetivos += [r for r in requisitos if r["classification"] == "PARTIAL"]
 
-    if not objetivos:
+    kb = cargar_kb(args.kb)
+    afinidad = cargar_afinidad(args.afinidad)
+
+    por_afinidad = []
+    for r in requisitos:
+        if r.get("via") == "afinidad" and r["classification"] == "VERIFIED":
+            cierre = cierre_por_afinidad(r, afinidad, kb)
+            if cierre:
+                r.update(cierre)
+                por_afinidad.append(r)
+
+    if not objetivos and not por_afinidad:
         print(f"✅ No hay gaps que cerrar para '{empresa}'. "
               f"El CV ya cubre todos los requisitos.")
         print(f"📊 Score actual: {score_actual}%")
         sys.exit(0)
 
-    kb = cargar_kb(args.kb)
-
-    print(f"\n🔍 Cerrando {len(objetivos)} gap(s) para '{empresa}' con Ollama...\n")
+    print(f"\n🔍 Cerrando {len(objetivos)} gap(s) para '{empresa}' con Ollama "
+          f"(+ {len(por_afinidad)} por afinidad, sin LLM)...\n")
 
     for r in objetivos:
         print(f"   [{r['categoria']}] {r['item']}...")
@@ -254,7 +283,7 @@ def main():
     print(f"🎯 TECHO HONESTO: {techo:.1f}%")
     print(f"{'='*60}\n")
 
-    for r in objetivos:
+    for r in objetivos + por_afinidad:
         icono = {
             "rewritable": "✅",
             "stretch": "🟡",
@@ -275,3 +304,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+PYEOF

@@ -10,5 +10,6 @@ venv/
 *.docx
 cv_perfil.json
 kb_index.json
+afinidad.json*
 matches/
 *.cambios.json

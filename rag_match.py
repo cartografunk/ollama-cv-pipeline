@@ -9,20 +9,19 @@ leer_jd_y_empresa, _contiene_termino, _variantes y las constantes de
 Ollama vienen todas de ahí.
 
 Flujo por cada requisito de la JD:
-  1. Match literal (idéntico a match.py) -> si hay match exacto, VERIFIED
-     inmediato, sin gastar una llamada al LLM.
-  2. Si no hay match literal: retrieval semántico contra kb_index.json
+  1. Lee afinidad.json, el banco curado y editable. Relaciona herramientas,
+     capacidades y experiencia confirmada por el candidato sin llamar al LLM.
+  2. Si no hay afinidad aplicable, busca match literal en el CV.
+  3. Si no hay match literal: retrieval semántico contra kb_index.json
      (top-k fragmentos de evidencia real, tal cual salen del CV).
-  3. Si ni el mejor fragmento pasa un piso mínimo de similitud (--sim-floor)
+  4. Si ni el mejor fragmento pasa un piso mínimo de similitud (--sim-floor)
      -> GAP directo. No tiene sentido preguntarle al LLM con evidencia
      irrelevante: eso es justo lo que abre la puerta a que "reconozca"
      algo que no está.
-  4. Si hay evidencia candidata: se le pasa SOLO esa evidencia (nunca el CV
+  5. Si hay evidencia candidata: se le pasa SOLO esa evidencia (nunca el CV
      completo, nunca el resto de la JD) a Ollama, pidiéndole clasificar
      VERIFIED / PARTIAL / GAP citando qué chunk(s) respaldan la conclusión.
-     El modelo no puede inventar experiencia porque su única fuente son
-     fragmentos verbatim del CV — si falla el parseo o Ollama no responde,
-     el resultado por default es GAP, nunca VERIFIED.
+     Si falla el parseo o Ollama no responde, el resultado por default es GAP.
 
 Requiere: cv_perfil.json (extract_cv.py) y kb_index.json (build_kb.py).
 
@@ -35,10 +34,12 @@ import argparse
 import json
 import os
 import sys
+from typing import Optional
 
 import requests
 
 from embeddings import cosine_similarity, embed_text
+from affinity import buscar_afinidad
 from match import (
     CARPETA_MATCHES,
     MODEL,
@@ -150,12 +151,21 @@ def clasificar_con_evidencia(requisito: str, evidencia: list, model: str = MODEL
 
 
 def evaluar_requisito(item: str, texto_cv: str, kb: dict, top_k: int, sim_floor: float,
-                       classify_model: str = MODEL) -> dict:
+                       classify_model: str = MODEL, afinidad: Optional[dict] = None) -> dict:
+    # Conceptos simples y alias explícitos se resuelven sin embeddings/LLM.
+    if afinidad:
+        resultado = buscar_afinidad(item, afinidad, kb)
+        if resultado:
+            return resultado
+
     # 1) Match literal, igual que match.py: barato, determinista, 100%
     #    trazable a texto exacto del CV.
     if any(_contiene_termino(texto_cv, v) for v in _variantes(item)):
-        return {"item": item, "classification": "VERIFIED", "evidence_ids": [],
-                "rationale": "match literal en el CV", "via": "literal"}
+        ids = [c["id"] for c in kb["chunks"]
+               if any(_contiene_termino(c["text"], v) for v in _variantes(item))]
+        if ids:
+            return {"item": item, "classification": "VERIFIED", "evidence_ids": ids,
+                    "rationale": "match literal en el CV", "via": "literal"}
 
     # 2) Retrieval semántico contra la knowledge base.
     try:
@@ -189,6 +199,8 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("jd", nargs="?", help="Ruta a la JD (.txt)")
     parser.add_argument("--kb", default="kb_index.json")
+    parser.add_argument("--afinidad", default="afinidad.json",
+                        help="Banco curado y editable de afinidad (opcional)")
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--sim-floor", type=float, default=0.15,
                          help="Similitud mínima para molestar al LLM (default: 0.15)")
@@ -210,6 +222,11 @@ def main():
     texto_cv = perfil_cv.get("texto_completo", "")
 
     kb = cargar_kb(args.kb)
+    afinidad = None
+    if os.path.isfile(args.afinidad):
+        with open(args.afinidad, "r", encoding="utf-8") as f:
+            afinidad = json.load(f)
+        print(f"⚡ Banco de afinidad cargado: {len(afinidad) - int('_meta' in afinidad)} conceptos")
 
     jd_text, empresa = leer_jd_y_empresa()
     if not jd_text.strip():
@@ -229,18 +246,20 @@ def main():
             procesados += 1
             print(f"   [{procesados}/{total_items}] {item}...")
             r = evaluar_requisito(item, texto_cv, kb, args.top_k, args.sim_floor,
-                                   classify_model=args.classify_model)
+                                   classify_model=args.classify_model, afinidad=afinidad)
             r["categoria"] = categoria
             r["peso"] = peso
             resultados.append(r)
 
     peso_total = sum(r["peso"] for r in resultados)
-    peso_logrado = sum(r["peso"] * PESO_CLASIFICACION[r["classification"]] for r in resultados)
+    peso_logrado = sum(r["peso"] * r.get("affinity_score", PESO_CLASIFICACION[r["classification"]])
+                       for r in resultados)
     score = (peso_logrado / peso_total * 100) if peso_total else 0.0
 
     must_have = [r for r in resultados if r["categoria"] == "must_have"]
     score_must = (
-        sum(PESO_CLASIFICACION[r["classification"]] for r in must_have) / len(must_have) * 100
+        sum(r.get("affinity_score", PESO_CLASIFICACION[r["classification"]])
+            for r in must_have) / len(must_have) * 100
         if must_have else 100.0
     )
 
@@ -255,7 +274,7 @@ def main():
         }, f, ensure_ascii=False, indent=2)
 
     print(f"\n{'='*60}")
-    print(f"📊 MATCH SCORE (RAG, ponderado — VERIFIED=1, PARTIAL=0.5): {score:.1f}%")
+    print(f"📊 MATCH SCORE (RAG + afinidad transferible): {score:.1f}%")
     print(f"🎯 MATCH SOLO EN MUST-HAVE: {score_must:.1f}%")
     print(f"{'='*60}\n")
 
