@@ -100,5 +100,79 @@ class TestRagMatch(unittest.TestCase):
         self.assertIsNone(buscar_afinidad("Advanced Power BI modeling", self.af))
 
 
+# ---------------------------------------------------------------------------
+# Familias (cobertura amplia)
+# ---------------------------------------------------------------------------
+from afinidad import estado_cobertura
+
+KB2 = {"model": "x", "chunks": [
+    {"id": "chunk_0001", "text": "Power BI, Excel, Python (Pandas), Docker", "section": "S"},
+    {"id": "chunk_0002", "text": "Strong decision-making under pressure; Auth with Supabase", "section": "S"},
+    {"id": "chunk_0003", "text": "Data quality checks on ETL pipelines", "section": "S"},
+]}
+
+FAM = {
+    "bi": {"aliases_familia": ["bi tools", "analytics and visualization tools"],
+           "miembros": {"power bi": ["powerbi"], "tableau": [], "looker": []}},
+    "lenguajes": {"relacionar_miembros": False, "aliases_familia": ["programming languages"],
+                  "miembros": {"python": [], "java": [], "rust": []}},
+    "juicio": {"ignorar_nivel": True, "aliases_familia": ["judgment skills"],
+               "miembros": {"decision making": ["decision-making"], "judgment": ["judgement"]}},
+    "calidad": {"tope_familia": "relacionado", "relacionar_miembros": False,
+                "aliases_familia": ["quality"],
+                "miembros": {"data quality": [], "iso 9001": []}},
+}
+
+
+class TestFamilias(unittest.TestCase):
+    def setUp(self):
+        self.af = construir(KB2, {}, FAM)
+
+    def test_miembro_directo(self):
+        self.assertEqual(self.af["power bi"]["nivel"], "directo")
+        self.assertEqual(self.af["power bi"]["evidence_ids"], ["chunk_0001"])
+
+    def test_pariente_de_la_familia_es_relacionado(self):
+        # El CV tiene Power BI, no Tableau: Tableau es PARTIAL, nunca VERIFIED.
+        t = self.af["tableau"]
+        self.assertEqual(t["nivel"], "relacionado")
+        self.assertIn("power bi", t["relacionado_encontrado"])
+
+    def test_familia_sin_relacionar_miembros_no_infla(self):
+        # Saber Python NO vuelve a Java/Rust parcialmente verificados.
+        self.assertEqual(self.af["java"]["nivel"], "ninguno")
+        self.assertEqual(self.af["rust"]["nivel"], "ninguno")
+        self.assertEqual(self.af["python"]["nivel"], "directo")
+
+    def test_requisito_de_categoria(self):
+        self.assertEqual(self.af["familia/bi"]["nivel"], "directo")
+        r = evaluar_requisito("Analytics and visualization tools", "", KB2, 5, 0.15,
+                              afinidad=self.af)
+        self.assertEqual((r["classification"], r["via"]), ("VERIFIED", "afinidad"))
+
+    def test_tope_de_familia(self):
+        # 'Quality' (categoría vaga) nunca pasa de PARTIAL aunque haya data quality.
+        self.assertEqual(self.af["familia/calidad"]["nivel"], "relacionado")
+        r = evaluar_requisito("Quality", "", KB2, 5, 0.15, afinidad=self.af)
+        self.assertEqual(r["classification"], "PARTIAL")
+
+    def test_ignorar_nivel_solo_en_soft_skills(self):
+        # "strong decision making" = "decision making" ...
+        self.assertIsNotNone(buscar_afinidad("Strong decision making", self.af))
+        # ... pero en herramientas "Advanced Power BI" NO es "Power BI".
+        self.assertIsNone(buscar_afinidad("Advanced Power BI", self.af))
+
+    def test_cobertura_estados(self):
+        self.assertEqual(estado_cobertura("PowerBI", self.af)[0], "directo")
+        self.assertEqual(estado_cobertura("Tableau", self.af)[0], "relacionado")
+        self.assertEqual(estado_cobertura("Java", self.af)[0], "ninguno")
+        self.assertEqual(estado_cobertura("Fortran", self.af)[0], "desconocido")
+
+    def test_seed_manda_sobre_familia(self):
+        seed = {"power bi": {"requiere_alguno": ["power bi"], "frase": "frase del seed"}}
+        af = construir(KB2, seed, FAM)
+        self.assertEqual(af["power bi"]["frase"], "frase del seed")
+
+
 if __name__ == "__main__":
     unittest.main()

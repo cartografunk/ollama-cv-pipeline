@@ -2,18 +2,19 @@
 afinidad.py — Lista de afinidad entre lo que pide una vacante y lo que el CV
 realmente respalda.
 
-Idea: cada CONCEPTO (ej. "power bi", "machine learning") dice con qué términos
-se considera respaldado. Un concepto solo cuenta si esos términos aparecen
-TEXTUALMENTE en algún chunk de kb_index.json (build_afinidad.py lo valida).
-La afinidad decide qué palabra de la vacante puedes usar y con qué evidencia;
-no cambia lo que hiciste.
+Idea: cada CONCEPTO (ej. "power bi", "machine learning", o una categoría como
+"familia/nubes") dice con qué términos se considera respaldado. Un concepto
+solo cuenta si esos términos aparecen TEXTUALMENTE en algún chunk de
+kb_index.json (build_afinidad.py lo valida). La afinidad decide qué palabra de
+la vacante puedes usar y con qué evidencia; no cambia lo que hiciste.
 
 Niveles de un concepto ya validado:
   - directo:      hay evidencia directa      -> VERIFIED
   - relacionado:  solo hay algo emparentado  -> PARTIAL
   - ninguno:      sin evidencia              -> no aplica (sigue el flujo normal)
 
-Este módulo es de uso en runtime (rag_match.py) y compartido con el generador.
+Este módulo es de uso en runtime (rag_match.py, cobertura_afinidad.py) y
+compartido con el generador.
 """
 
 import json
@@ -27,9 +28,19 @@ import unicodedata
 STOPWORDS = {
     "experience", "knowledge", "skills", "skill", "proficiency", "with", "of",
     "in", "and", "the", "a", "an", "for", "using", "tools", "tool",
+    "ability", "to",
     "de", "en", "con", "y", "el", "la", "los", "las",
     "experiencia", "conocimiento", "conocimientos", "manejo", "uso",
     "herramientas",
+}
+
+# Solo para conceptos con "ignorar_nivel": true (soft skills): "strong
+# judgment" y "judgment" son lo mismo para una vacante. En herramientas NO se
+# aplica.
+PALABRAS_NIVEL = {
+    "strong", "excellent", "good", "solid", "proven", "great", "outstanding",
+    "advanced", "basic", "intermediate", "senior", "confident", "confidently",
+    "sound", "effective", "effectively",
 }
 
 
@@ -69,45 +80,66 @@ def contiene_termino(termino: str, toks: list) -> bool:
     return False
 
 
-def _clave(texto: str) -> tuple:
-    return tuple(t for t in tokens(texto) if t not in STOPWORDS)
+def _clave(texto: str, ignorar_nivel: bool = False) -> tuple:
+    omitir = STOPWORDS | PALABRAS_NIVEL if ignorar_nivel else STOPWORDS
+    return tuple(t for t in tokens(texto) if t not in omitir)
+
+
+def _encontrar_concepto(item: str, afinidad: dict):
+    """(nombre, definición) del concepto cuyo nombre o alias sea EXACTAMENTE
+    el requisito (ignorando palabras de relleno), o None."""
+    for concepto, d in afinidad.items():
+        ign = bool(d.get("ignorar_nivel"))
+        clave = _clave(item, ign)
+        if not clave:
+            continue
+        nombres = [concepto] + list(d.get("alias_requisito") or [])
+        if any(_clave(n, ign) == clave for n in nombres):
+            return concepto, d
+    return None
 
 
 def buscar_afinidad(item: str, afinidad: dict):
-    """Busca un concepto cuyo nombre o alias sea EXACTAMENTE el requisito
-    (ignorando palabras de relleno). Devuelve un dict listo para rag_match o
-    None si no hay afinidad aplicable.
+    """Devuelve un dict listo para rag_match si el requisito coincide con un
+    concepto respaldado (directo -> VERIFIED, relacionado -> PARTIAL), o None.
 
     Conservador a propósito: 'Advanced SQL optimization' no coincide con el
     concepto 'sql'; ese caso sigue el flujo semántico normal."""
-    clave = _clave(item)
-    if not clave:
+    hallado = _encontrar_concepto(item, afinidad)
+    if hallado is None:
         return None
+    concepto, d = hallado
 
-    for concepto, d in afinidad.items():
-        nombres = [concepto] + list(d.get("alias_requisito") or [])
-        if not any(_clave(n) == clave for n in nombres):
-            continue
+    nivel = d.get("nivel")
+    ids = list(d.get("evidence_ids") or [])
+    if nivel == "directo":
+        return {
+            "classification": "VERIFIED",
+            "evidence_ids": ids,
+            "rationale": f"afinidad '{concepto}': respaldado por {', '.join(ids) or 'el CV'}",
+            "concepto": concepto,
+        }
+    if nivel == "relacionado":
+        return {
+            "classification": "PARTIAL",
+            "evidence_ids": ids,
+            "rationale": (f"afinidad '{concepto}': solo hay evidencia relacionada "
+                          f"({', '.join(d.get('relacionado_encontrado') or [])})"),
+            "concepto": concepto,
+        }
+    return None   # concepto conocido pero sin respaldo: no afirmar nada
 
-        nivel = d.get("nivel")
-        ids = list(d.get("evidence_ids") or [])
-        if nivel == "directo":
-            return {
-                "classification": "VERIFIED",
-                "evidence_ids": ids,
-                "rationale": f"afinidad '{concepto}': respaldado por {', '.join(ids) or 'el CV'}",
-                "concepto": concepto,
-            }
-        if nivel == "relacionado":
-            return {
-                "classification": "PARTIAL",
-                "evidence_ids": ids,
-                "rationale": (f"afinidad '{concepto}': solo hay evidencia relacionada "
-                              f"({', '.join(d.get('relacionado_encontrado') or [])})"),
-                "concepto": concepto,
-            }
-        return None   # concepto conocido pero sin respaldo: no afirmar nada
-    return None
+
+def estado_cobertura(item: str, afinidad: dict) -> tuple:
+    """(estado, concepto) para el reporte de cobertura. estado:
+    'directo' | 'relacionado' | 'ninguno' (concepto conocido, el CV no lo
+    respalda) | 'desconocido' (ningún concepto ni familia lo contempla: hay
+    que ampliar afinidad_familias.json o dejar que lo juzgue el LLM)."""
+    hallado = _encontrar_concepto(item, afinidad)
+    if hallado is None:
+        return "desconocido", None
+    concepto, d = hallado
+    return d.get("nivel", "ninguno"), concepto
 
 
 def cargar_afinidad(path: str):

@@ -1,0 +1,687 @@
+{
+  "_ayuda": "Cada familia agrupa habilidades equivalentes o cercanas. build_afinidad.py crea solo una entrada por miembro y una por familia: DIRECTO si tu CV contiene el término (o un alias), RELACIONADO si contiene otro miembro de la misma familia. 'aliases_familia' son los nombres con que una vacante pide la categoría completa. Opciones: 'ignorar_nivel' (true: 'strong', 'excellent'... no cambian el requisito, útil en soft skills) y 'tope_familia' ('relacionado': la categoría vaga nunca pasa de PARTIAL). 'relacionar_miembros' (false: saber un miembro NO hace PARTIAL a otro, ej. Python no hace PARTIAL a Java; solo cuenta lo que el CV dice literalmente). Para ampliar cobertura agrega miembros o familias aquí; no hace falta tocar código. Limitación: términos con símbolos como C++ o C# no se distinguen (se reducen a 'c').",
+
+  "familias": {
+    "bi_reportes": {
+      "aliases_familia": ["bi tools", "business intelligence", "bi", "business intelligence tools", "analytics and visualization tools", "reporting tools", "reporting and visualization tools", "data visualization tools", "visualization tools", "analytics tools", "herramientas de bi"],
+      "miembros": {
+        "power bi": ["powerbi", "microsoft power bi", "power bi desktop", "power bi service"],
+        "tableau": ["tableau desktop", "tableau public"],
+        "looker": ["looker studio", "google data studio", "data studio"],
+        "qlik": ["qlik sense", "qlikview"],
+        "excel": ["microsoft excel", "ms excel"],
+        "power query": ["power query m"],
+        "metabase": [],
+        "superset": ["apache superset"],
+        "google sheets": [],
+        "arcgis dashboards": ["arcgis dashboard"]
+      }
+    },
+    "visualizacion_programatica": {
+      "aliases_familia": ["python visualization libraries", "data visualization libraries", "visualization libraries", "plotting libraries", "charting libraries"],
+      "miembros": {
+        "plotly": ["plotly express"],
+        "matplotlib": [],
+        "seaborn": [],
+        "bokeh": [],
+        "altair": [],
+        "ggplot2": ["ggplot"],
+        "d3.js": ["d3"]
+      }
+    },
+    "gis_escritorio": {
+      "aliases_familia": ["gis software", "desktop gis", "gis tools", "gis platforms", "geospatial software", "gis", "geographic information systems", "sig", "sistemas de informacion geografica"],
+      "miembros": {
+        "qgis": ["quantum gis"],
+        "arcgis": ["esri arcgis", "arcgis platform"],
+        "arcgis pro": ["arcgis desktop"],
+        "arcmap": [],
+        "grass gis": ["grass"],
+        "global mapper": [],
+        "saga gis": ["saga"],
+        "mapinfo": ["mapinfo pro"]
+      }
+    },
+    "gis_web_mapeo": {
+      "aliases_familia": ["web mapping libraries", "webgis", "interactive maps", "mapping libraries", "web mapping tools", "web map libraries"],
+      "miembros": {
+        "arcgis online": ["agol"],
+        "arcgis web maps": ["arcgis web map", "arcgis web mapping"],
+        "maplibre gl js": ["maplibre", "maplibre gl"],
+        "mapbox gl js": ["mapbox", "mapbox gl"],
+        "leaflet": ["leaflet.js", "leafletjs"],
+        "openlayers": ["open layers"],
+        "google maps api": ["google maps", "google maps platform"],
+        "cesium": ["cesiumjs"],
+        "deck.gl": ["deckgl"],
+        "carto": ["cartodb"],
+        "kepler.gl": ["kepler"],
+        "folium": []
+      }
+    },
+    "bases_espaciales": {
+      "aliases_familia": ["spatial database systems", "gis databases", "geodatabases", "spatial data stores"],
+      "miembros": {
+        "postgis": [],
+        "spatialite": [],
+        "geodatabase": ["file geodatabase", "enterprise geodatabase", "esri geodatabase", "arcgis geodatabase"],
+        "geopackage": ["gpkg"],
+        "oracle spatial": [],
+        "sql server spatial": []
+      }
+    },
+    "servidores_mapas": {
+      "aliases_familia": ["map servers", "gis servers", "geospatial servers", "ogc services", "map server software", "map services"],
+      "miembros": {
+        "geoserver": [],
+        "mapserver": ["umn mapserver"],
+        "arcgis server": ["arcgis enterprise"],
+        "qgis server": [],
+        "geonode": [],
+        "mapproxy": []
+      }
+    },
+    "python_geoespacial": {
+      "aliases_familia": ["python geospatial libraries", "geospatial python", "python gis libraries", "python for gis", "geospatial libraries"],
+      "miembros": {
+        "geopandas": [],
+        "shapely": [],
+        "rasterio": [],
+        "gdal": ["osgeo", "gdal/ogr", "ogr"],
+        "fiona": [],
+        "pyproj": [],
+        "arcpy": [],
+        "xarray": [],
+        "rioxarray": [],
+        "osmnx": [],
+        "pysal": []
+      }
+    },
+    "teledeteccion": {
+      "aliases_familia": ["remote sensing software", "remote sensing tools", "earth observation tools", "eo tools", "remote sensing platforms", "image analysis software"],
+      "miembros": {
+        "envi": ["exelis envi"],
+        "erdas imagine": ["erdas"],
+        "google earth engine": ["gee", "earth engine"],
+        "snap": ["esa snap"],
+        "sentinel hub": ["sentinel hub eo browser", "eo browser"],
+        "orfeo toolbox": ["otb"],
+        "pci geomatica": ["geomatica"],
+        "ecognition": []
+      }
+    },
+    "fotogrametria_drones": {
+      "aliases_familia": ["photogrammetry software", "drone mapping software", "uav processing software", "drone data processing", "photogrammetry"],
+      "miembros": {
+        "pix4d": ["pix4dmapper", "pix4d mapper"],
+        "agisoft metashape": ["metashape", "photoscan"],
+        "opendronemap": ["odm", "webodm"],
+        "dronedeploy": [],
+        "dji terra": []
+      }
+    },
+    "bases_relacionales": {
+      "aliases_familia": ["relational databases", "rdbms", "relational database", "bases de datos relacionales", "databases", "database management systems", "dbms"],
+      "miembros": {
+        "postgresql": ["postgres", "psql"],
+        "mysql": [],
+        "mariadb": [],
+        "sql server": ["microsoft sql server", "mssql", "ms sql", "tsql", "t-sql"],
+        "oracle": ["oracle database", "oracle db", "pl/sql"],
+        "sqlite": []
+      }
+    },
+    "bases_nosql": {
+      "aliases_familia": ["nosql databases", "nosql", "document databases", "nosql database"],
+      "miembros": {
+        "mongodb": ["mongo"],
+        "dynamodb": [],
+        "cassandra": [],
+        "redis": [],
+        "couchdb": [],
+        "elasticsearch": ["elastic search"],
+        "firestore": []
+      }
+    },
+    "data_warehouses": {
+      "aliases_familia": ["data warehouses", "data warehouse", "cloud data warehouse", "data warehousing", "datawarehouse"],
+      "miembros": {
+        "bigquery": ["google bigquery"],
+        "snowflake": [],
+        "redshift": ["amazon redshift"],
+        "azure synapse": ["synapse"],
+        "databricks": [],
+        "clickhouse": []
+      }
+    },
+    "librerias_datos_python": {
+      "aliases_familia": ["python data libraries", "data manipulation", "python data analysis libraries", "dataframes", "dataframe libraries"],
+      "miembros": {
+        "pandas": [],
+        "polars": [],
+        "numpy": [],
+        "dask": [],
+        "pyspark": ["apache spark", "spark"],
+        "duckdb": [],
+        "modin": [],
+        "vaex": []
+      }
+    },
+    "orquestacion_etl": {
+      "aliases_familia": ["etl tools", "orchestration tools", "workflow orchestration", "data orchestration", "data pipeline tools", "pipeline orchestration", "workflow management"],
+      "miembros": {
+        "airflow": ["apache airflow"],
+        "dagster": [],
+        "prefect": [],
+        "luigi": [],
+        "dbt": ["data build tool"],
+        "nifi": ["apache nifi"],
+        "talend": [],
+        "ssis": ["sql server integration services"],
+        "azure data factory": ["adf"],
+        "fivetran": [],
+        "fme": ["safe fme", "fme desktop"]
+      }
+    },
+    "streaming": {
+      "aliases_familia": ["data streaming", "real-time data", "event streaming", "message queues", "messaging systems", "real time data processing"],
+      "miembros": {
+        "kafka": ["apache kafka"],
+        "kinesis": ["aws kinesis"],
+        "pub/sub": ["pubsub", "google pubsub"],
+        "rabbitmq": [],
+        "azure event hubs": ["event hubs"],
+        "flink": ["apache flink"]
+      }
+    },
+    "ml_clasico": {
+      "aliases_familia": ["machine learning libraries", "ml libraries", "machine learning frameworks", "classical machine learning", "ml frameworks"],
+      "miembros": {
+        "scikit-learn": ["sklearn", "sci-kit learn", "scikit learn"],
+        "xgboost": [],
+        "lightgbm": [],
+        "catboost": [],
+        "statsmodels": []
+      }
+    },
+    "deep_learning_frameworks": {
+      "aliases_familia": ["deep learning frameworks", "dl frameworks", "neural network frameworks"],
+      "miembros": {
+        "pytorch": ["torch"],
+        "tensorflow": ["tf"],
+        "keras": ["tf.keras"],
+        "jax": [],
+        "pytorch lightning": ["lightning"],
+        "fastai": []
+      }
+    },
+    "vision_computadora": {
+      "aliases_familia": ["computer vision libraries", "image processing libraries", "cv libraries", "image processing tools", "image processing"],
+      "miembros": {
+        "opencv": ["cv2", "open cv"],
+        "scikit-image": ["skimage"],
+        "yolo": ["yolov5", "yolov8", "ultralytics"],
+        "detectron2": [],
+        "segmentation models pytorch": ["smp"]
+      }
+    },
+    "inteligencia_artificial": {
+      "aliases_familia": ["ai", "artificial intelligence", "inteligencia artificial", "ai/ml", "ai and ml", "ai ml", "ai technologies"],
+      "miembros": {
+        "machine learning": ["ml", "machine learning models", "aprendizaje automatico"],
+        "deep learning": ["dl"],
+        "computer vision": ["vision por computadora", "vision artificial", "artificial vision"],
+        "natural language processing": ["nlp"],
+        "llm": ["llms", "large language models", "large language model"],
+        "generative ai": ["genai", "gen ai", "generative artificial intelligence"],
+        "semantic segmentation": ["image segmentation"],
+        "predictive modeling": ["predictive analytics", "predictive models"],
+        "neural networks": ["neural network", "redes neuronales"]
+      }
+    },
+    "ia_generativa_tecnicas": {
+      "aliases_familia": ["generative ai techniques", "llm techniques", "llm engineering", "ai engineering", "llmops"],
+      "miembros": {
+        "llm": ["llms", "large language models", "large language model"],
+        "rag": ["retrieval augmented generation", "retrieval-augmented generation", "rag architecture"],
+        "embeddings": ["vector embeddings", "text embeddings"],
+        "vector search": ["semantic search", "similarity search"],
+        "prompt engineering": ["prompting"],
+        "fine-tuning": ["fine tuning", "finetuning"],
+        "ai agents": ["agents", "agentic"]
+      }
+    },
+    "llm_plataformas": {
+      "aliases_familia": ["llm frameworks", "llm tools", "llm platforms", "generative ai tools", "genai tools", "llm apis", "llm providers"],
+      "miembros": {
+        "openai api": ["openai", "chatgpt api"],
+        "anthropic api": ["claude api", "claude", "anthropic"],
+        "google gemini": ["gemini", "gemini api"],
+        "ollama": [],
+        "hugging face": ["huggingface", "transformers", "hugging face transformers"],
+        "langchain": [],
+        "llamaindex": ["llama index"]
+      }
+    },
+    "vector_databases": {
+      "aliases_familia": ["vector databases", "vector stores", "vector db", "embedding stores"],
+      "miembros": {
+        "pinecone": [],
+        "chroma": ["chromadb"],
+        "faiss": [],
+        "weaviate": [],
+        "pgvector": [],
+        "qdrant": [],
+        "milvus": []
+      }
+    },
+    "mlops": {
+      "aliases_familia": ["mlops", "ml ops", "model deployment", "model management", "ml lifecycle", "experiment tracking"],
+      "miembros": {
+        "mlflow": [],
+        "kubeflow": [],
+        "weights & biases": ["wandb", "weights and biases"],
+        "dvc": [],
+        "sagemaker": ["amazon sagemaker"],
+        "vertex ai": ["google vertex ai"],
+        "azure machine learning": ["azure ml"]
+      }
+    },
+    "notebooks": {
+      "aliases_familia": ["notebooks", "computational notebooks", "notebook environments", "interactive notebooks"],
+      "miembros": {
+        "jupyter": ["jupyter notebook", "jupyter notebooks", "jupyterlab", "ipython"],
+        "google colab": ["colab", "colaboratory"],
+        "rstudio": ["r studio"]
+      }
+    },
+    "nubes": {
+      "aliases_familia": ["cloud", "cloud platforms", "cloud computing", "cloud services", "cloud providers", "cloud infrastructure", "public cloud", "cloud technologies", "cloud platform"],
+      "miembros": {
+        "aws": ["amazon web services", "amazon aws"],
+        "azure": ["microsoft azure"],
+        "gcp": ["google cloud", "google cloud platform"],
+        "oracle cloud": ["oci"],
+        "digitalocean": [],
+        "ibm cloud": []
+      }
+    },
+    "almacenamiento_objetos": {
+      "aliases_familia": ["object storage", "cloud storage", "blob storage"],
+      "miembros": {
+        "s3": ["aws s3", "amazon s3"],
+        "cloudflare r2": ["r2"],
+        "google cloud storage": ["gcs"],
+        "azure blob storage": ["azure blob"],
+        "minio": []
+      }
+    },
+    "contenedores": {
+      "aliases_familia": ["containers", "containerization", "container technologies", "contenedores", "containerisation"],
+      "miembros": {
+        "docker": ["docker compose", "dockerfile"],
+        "podman": [],
+        "kubernetes": ["k8s"]
+      }
+    },
+    "orquestacion_contenedores": {
+      "aliases_familia": ["container orchestration", "orchestration platforms"],
+      "miembros": {
+        "kubernetes": ["k8s"],
+        "docker swarm": [],
+        "openshift": [],
+        "nomad": [],
+        "amazon ecs": ["ecs"]
+      }
+    },
+    "infra_as_code": {
+      "aliases_familia": ["infrastructure as code", "iac", "infrastructure automation", "configuration management"],
+      "miembros": {
+        "terraform": [],
+        "ansible": [],
+        "cloudformation": ["aws cloudformation"],
+        "pulumi": [],
+        "bicep": [],
+        "puppet": [],
+        "chef": []
+      }
+    },
+    "control_versiones": {
+      "aliases_familia": ["version control", "source control", "version control systems", "vcs", "control de versiones", "source code management"],
+      "miembros": {
+        "git": [],
+        "github": ["github.com"],
+        "gitlab": [],
+        "bitbucket": [],
+        "svn": ["subversion"],
+        "azure repos": []
+      }
+    },
+    "ci_cd": {
+      "aliases_familia": ["ci/cd", "ci cd", "continuous integration", "cicd", "continuous delivery", "continuous deployment", "devops pipelines"],
+      "miembros": {
+        "github actions": [],
+        "gitlab ci": ["gitlab ci/cd"],
+        "jenkins": [],
+        "circleci": [],
+        "azure devops": ["azure pipelines"],
+        "travis ci": [],
+        "argo cd": ["argocd"]
+      }
+    },
+    "monitoreo": {
+      "aliases_familia": ["monitoring", "observability", "monitoring tools", "logging and monitoring", "application monitoring"],
+      "miembros": {
+        "grafana": [],
+        "prometheus": [],
+        "datadog": [],
+        "new relic": [],
+        "elk stack": ["elk", "elastic stack"],
+        "splunk": [],
+        "sentry": [],
+        "cloudwatch": ["aws cloudwatch"]
+      }
+    },
+    "frontend_frameworks": {
+      "aliases_familia": ["frontend frameworks", "front-end frameworks", "javascript frameworks", "ui frameworks", "front end frameworks", "frontend development", "front-end development", "front end development"],
+      "miembros": {
+        "react": ["react.js", "reactjs"],
+        "vue": ["vue.js", "vuejs"],
+        "angular": ["angularjs"],
+        "svelte": [],
+        "next.js": ["nextjs"],
+        "nuxt": ["nuxt.js"]
+      }
+    },
+    "lenguajes_js": {
+      "aliases_familia": ["javascript/typescript", "js/ts", "javascript typescript"],
+      "miembros": {
+        "javascript": ["js", "ecmascript", "es6"],
+        "typescript": []
+      }
+    },
+    "desarrollo_backend": {
+      "aliases_familia": ["backend development", "back-end development", "backend", "server-side development", "backend frameworks", "back end development"],
+      "miembros": {
+        "fastapi": [],
+        "flask": [],
+        "django": ["django rest framework", "drf"],
+        "node.js": ["nodejs"],
+        "express": ["express.js", "expressjs"],
+        "nestjs": ["nest.js"],
+        "spring boot": ["spring"],
+        ".net": ["dotnet", "asp.net", ".net core"],
+        "laravel": [],
+        "rails": ["ruby on rails"]
+      }
+    },
+    "baas_servicios": {
+      "aliases_familia": ["backend as a service", "baas", "backend services", "serverless backend"],
+      "miembros": {
+        "supabase": [],
+        "firebase": [],
+        "appwrite": [],
+        "hasura": [],
+        "pocketbase": [],
+        "aws amplify": ["amplify"]
+      }
+    },
+    "low_code": {
+      "aliases_familia": ["low-code", "no-code", "low code platforms", "no code", "low-code platforms", "automation platforms", "workflow automation"],
+      "miembros": {
+        "power apps": ["powerapps", "microsoft power apps"],
+        "power automate": ["microsoft power automate"],
+        "appsheet": [],
+        "retool": [],
+        "airtable": [],
+        "zapier": [],
+        "n8n": []
+      }
+    },
+    "apis_integracion": {
+      "aliases_familia": ["apis", "api integration", "web services", "api development", "api", "integration", "api design"],
+      "miembros": {
+        "rest api": ["rest apis", "restful", "restful api", "rest"],
+        "graphql": [],
+        "soap": [],
+        "openapi": ["swagger"],
+        "postman": [],
+        "grpc": [],
+        "webhooks": [],
+        "authentication": ["auth", "sso", "oauth"]
+      }
+    },
+    "testing": {
+      "aliases_familia": ["testing frameworks", "test automation", "automated testing", "testing tools", "unit testing", "qa automation"],
+      "miembros": {
+        "pytest": [],
+        "unittest": [],
+        "jest": [],
+        "selenium": [],
+        "cypress": [],
+        "playwright": [],
+        "junit": []
+      }
+    },
+    "lenguajes_datos": {
+      "aliases_familia": ["statistical programming", "statistical software", "statistical languages", "data science languages", "data science programming"],
+      "miembros": {
+        "python": [],
+        "r": ["r language", "r programming"],
+        "julia": [],
+        "matlab": [],
+        "sas": [],
+        "stata": [],
+        "spss": ["ibm spss"]
+      }
+    },
+    "lenguajes_programacion": {
+      "relacionar_miembros": false,
+      "aliases_familia": ["programming", "programming languages", "coding", "software development", "scripting", "scripting languages"],
+      "miembros": {
+        "python": [],
+        "javascript": ["js"],
+        "typescript": [],
+        "sql": [],
+        "r": ["r language"],
+        "java": [],
+        "golang": ["go language"],
+        "rust": [],
+        "bash": ["shell scripting", "bash scripting", "shell"],
+        "php": [],
+        "ruby": [],
+        "scala": [],
+        "kotlin": [],
+        "swift": []
+      }
+    },
+    "sistemas_operativos": {
+      "relacionar_miembros": false,
+      "aliases_familia": ["operating systems", "command line", "unix/linux", "cli", "linux/unix", "linux environments"],
+      "miembros": {
+        "linux": ["ubuntu", "debian", "unix", "gnu/linux"],
+        "wsl": ["windows subsystem for linux"],
+        "bash": ["shell scripting", "bash scripting", "shell"],
+        "powershell": [],
+        "zsh": []
+      }
+    },
+    "ofimatica": {
+      "relacionar_miembros": false,
+      "aliases_familia": ["microsoft office", "office suite", "microsoft 365", "office 365", "m365", "ms office", "productivity tools", "office tools", "herramientas de ofimatica", "google workspace", "collaboration tools", "productivity suite"],
+      "miembros": {
+        "word": ["microsoft word", "ms word"],
+        "excel": ["microsoft excel", "ms excel"],
+        "powerpoint": ["microsoft powerpoint", "ms powerpoint", "power point"],
+        "outlook": ["microsoft outlook"],
+        "sharepoint": [],
+        "onedrive": [],
+        "teams": ["microsoft teams", "ms teams"],
+        "google drive": ["gdrive"],
+        "google docs": [],
+        "google sheets": [],
+        "google slides": [],
+        "google workspace": ["g suite", "gsuite"],
+        "notion": [],
+        "slack": []
+      }
+    },
+    "gestion_proyectos_herramientas": {
+      "aliases_familia": ["project management tools", "project management software", "task management tools", "issue tracking", "ticketing", "work management tools"],
+      "miembros": {
+        "jira": ["atlassian jira"],
+        "trello": [],
+        "asana": [],
+        "monday.com": ["monday"],
+        "clickup": [],
+        "confluence": [],
+        "azure boards": [],
+        "linear": []
+      }
+    },
+    "metodologias": {
+      "relacionar_miembros": false,
+      "aliases_familia": ["agile methodologies", "agile", "project management methodologies", "methodologies", "agile practices", "metodologias agiles"],
+      "miembros": {
+        "agile": ["agile methodology"],
+        "scrum": [],
+        "kanban": [],
+        "waterfall": []
+      }
+    },
+    "cad_diseno": {
+      "relacionar_miembros": false,
+      "aliases_familia": ["cad software", "cad", "design software", "engineering design software"],
+      "miembros": {
+        "autocad": ["auto cad"],
+        "civil 3d": ["autocad civil 3d"],
+        "microstation": [],
+        "revit": [],
+        "sketchup": []
+      }
+    },
+
+    "analitica_datos": {
+      "aliases_familia": ["data analytics", "analytics", "data analysis", "analisis de datos", "analitica de datos", "data-driven analysis", "data analytics skills"],
+      "miembros": {
+        "data analysis": ["data analytics", "analytics", "analisis de datos", "analitica de datos"],
+        "exploratory data analysis": ["eda"],
+        "statistical analysis": ["statistics", "statistical modeling", "statistical modelling", "estadistica"],
+        "time series": ["time series analysis", "time series forecasting"],
+        "forecasting": [],
+        "a/b testing": ["ab testing", "experimentation"],
+        "data mining": [],
+        "data cleansing": ["data cleaning", "data wrangling"]
+      }
+    },
+    "ingenieria_datos": {
+      "aliases_familia": ["data engineering", "ingenieria de datos", "data engineer", "data infrastructure", "data platforms", "data pipelines engineering"],
+      "miembros": {
+        "etl": ["etl pipelines", "elt", "etl/elt", "data pipelines", "data pipeline"],
+        "data ingestion": ["data integration"],
+        "data modeling": ["data modelling", "dimensional modeling", "data models"],
+        "data validation": ["data quality"],
+        "data warehousing": ["data warehouse"],
+        "data lake": ["data lakes", "lakehouse"]
+      }
+    },
+    "ehs_hse": {
+      "relacionar_miembros": false,
+      "aliases_familia": ["ehs", "hse", "health and safety", "environment health and safety", "environmental health and safety", "environmental, health and safety", "health safety and environment", "occupational health and safety", "ehs compliance", "seguridad e higiene", "seguridad y salud ocupacional"],
+      "miembros": {
+        "ehs": ["hse", "environmental health and safety", "environment health and safety", "health safety and environment", "occupational health and safety"],
+        "environmental compliance": ["environmental regulations", "environmental regulation compliance", "cumplimiento ambiental"],
+        "regulatory compliance": ["compliance", "regulatory affairs"],
+        "environmental impact assessment": ["eia", "environmental assessment", "evaluacion de impacto ambiental"],
+        "iso 14001": ["iso14001"],
+        "iso 45001": ["iso45001", "ohsas 18001"],
+        "risk assessment": ["risk analysis"]
+      }
+    },
+    "sostenibilidad_reporteo": {
+      "aliases_familia": ["sustainability", "esg", "non-financial reporting", "sustainability reporting", "esg reporting", "csr", "corporate social responsibility", "environmental sustainability", "sostenibilidad", "reporteo no financiero"],
+      "miembros": {
+        "sustainability": ["sostenibilidad", "sustentabilidad", "sustainable development"],
+        "esg": ["environmental social and governance", "environmental, social and governance"],
+        "non-financial reporting": ["nonfinancial reporting", "non financial reporting", "sustainability reporting", "esg reporting", "csrd", "gri standards", "gri"],
+        "carbon footprint": ["greenhouse gas", "ghg", "carbon accounting", "huella de carbono"],
+        "life cycle assessment": ["lca", "analisis de ciclo de vida"]
+      }
+    },
+    "calidad": {
+      "relacionar_miembros": false,
+      "aliases_familia": ["quality", "quality management", "quality systems", "quality assurance and control"],
+      "tope_familia": "relacionado",
+      "miembros": {
+        "quality assurance": ["qa"],
+        "quality control": ["qc"],
+        "data quality": ["data quality assurance", "data validation"],
+        "iso 9001": ["iso9001"],
+        "six sigma": ["lean six sigma"]
+      }
+    },
+    "seguridad": {
+      "relacionar_miembros": false,
+      "aliases_familia": ["security", "cybersecurity", "information security", "infosec", "ciberseguridad", "cyber security"],
+      "tope_familia": "relacionado",
+      "miembros": {
+        "cybersecurity": ["cyber security", "ciberseguridad"],
+        "information security": ["infosec"],
+        "owasp": [],
+        "iso 27001": ["iso27001"],
+        "soc 2": ["soc2"],
+        "penetration testing": ["pentesting"]
+      }
+    },
+
+    "comunicacion": {
+      "ignorar_nivel": true,
+      "aliases_familia": ["communication skills", "communication", "interpersonal communication", "comunicacion", "comunicacion efectiva"],
+      "miembros": {
+        "communication": ["communication skills", "effective communication", "communicate", "written communication", "verbal communication", "oral communication", "comunicacion", "comunicacion efectiva"],
+        "presentations": ["presentation skills", "public speaking", "presenting"],
+        "stakeholder management": ["stakeholder communication", "stakeholder engagement"],
+        "data storytelling": ["storytelling"],
+        "technical writing": ["technical documentation", "documentation"]
+      }
+    },
+    "pensamiento_analitico": {
+      "ignorar_nivel": true,
+      "aliases_familia": ["analytical skills", "analytical thinking", "critical thinking", "problem solving", "problem-solving skills", "logical thinking", "pensamiento analitico", "pensamiento critico", "resolucion de problemas"],
+      "miembros": {
+        "analytical thinking": ["analytical skills", "analytical mindset", "analytical ability", "pensamiento analitico"],
+        "critical thinking": ["pensamiento critico"],
+        "problem solving": ["problem-solving", "resolucion de problemas"],
+        "attention to detail": ["detail oriented", "detail-oriented"]
+      }
+    },
+    "colaboracion": {
+      "ignorar_nivel": true,
+      "aliases_familia": ["collaboration", "teamwork", "team player", "work collaboratively", "cross-functional collaboration", "colaboracion", "trabajo en equipo"],
+      "miembros": {
+        "collaboration": ["collaborate", "colaboracion"],
+        "teamwork": ["team player", "trabajo en equipo", "work as a team"],
+        "cross-functional collaboration": ["cross functional", "cross-functional teams"]
+      }
+    },
+    "liderazgo": {
+      "relacionar_miembros": false,
+      "ignorar_nivel": true,
+      "aliases_familia": ["leadership", "team leadership", "people management", "leading teams", "liderazgo", "project leadership"],
+      "miembros": {
+        "leadership": ["team leadership", "lead teams", "leading teams", "liderazgo"],
+        "project management": ["project manager", "gestion de proyectos", "project coordination"],
+        "mentoring": ["mentorship", "coaching"],
+        "people management": ["team management", "managing teams"]
+      }
+    },
+    "juicio_decisiones": {
+      "ignorar_nivel": true,
+      "aliases_familia": ["judgment", "decision making", "decision-making", "good judgment", "sound judgment", "toma de decisiones"],
+      "miembros": {
+        "judgment": ["judgement"],
+        "decision making": ["decision-making", "toma de decisiones"]
+      }
+    }
+  }
+}
